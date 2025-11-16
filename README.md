@@ -8,15 +8,23 @@ This AI Python Tutor is a great way for new programmers to get started on their 
 5. Gives constructive, motivating feedback
 
 ## Installation
-You can install and run the program easily:
+You can install the program easily by pasting this to the terminal:
 ```bash
 git clone https://github.com/GavinRobson/ai-final GavinRobsonAiFinal
 cd GavinRobsonAiFinal
 ```
 
 ## Starting Server
-* In order to run the backend service, run: `./server`
-  * NOTE: If you get error `OPENAI_API_KEY must be set`, make sure to `cd` into the newly created `GavinRobsonAiFinal` directory.
-    
+### Windows
+* To run the program on windows:
+  ```bash
+  ./builds/server-windows-amd64.exe
+  ```
+### MacOS / Linux
+* To run the program on MacOS or Linux:
+```bash
+./run.sh
+```
+
 * Now, the server should be running in the terminal
 * Open a browser and navigate to http://localhost:3000 in order to see the page
