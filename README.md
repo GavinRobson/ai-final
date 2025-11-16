@@ -23,7 +23,7 @@ cd GavinRobsonAiFinal
 ### MacOS / Linux
 * To run the program on MacOS or Linux:
   ```bash
-  ./run.sh
+  ./scripts/run.sh
   ```
 * **NOTE: If you get error `OPENAI_API_KEY must be set`, make sure to `cd` into the newly created `GavinRobsonAiFinal` directory and make sure the `OPENAI_API_KEY` variable is set to a valid key in the `.env` file.**
 * Now, the server should be running in the terminal.
