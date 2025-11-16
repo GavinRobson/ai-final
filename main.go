@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
-	"encoding/json"
+	// "encoding/json"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
-	"fmt"
+	// "fmt"
 
 	"github.com/joho/godotenv"
 	openai "github.com/sashabaranov/go-openai"
@@ -39,12 +39,7 @@ func main() {
 			create exercises for the user to complete, and give constructive, motivating feedback 
 			on the user's code.	This will be a purely textual response so please format 
 			accordingly. Please use very short responses that get straight to the point, not 
-			a lot of verboseness. Please format your response as follows in json:
-			{
-				message: <your message here>
-				code: <your code example here> (if no code, use empty string)
-			}
-			`,
+			a lot of verboseness.`,
 		},
 	}
 
@@ -65,39 +60,40 @@ func handleMessage(w http.ResponseWriter, r *http.Request, client *openai.Client
 
 	respText, updatedMessages := getOpenAIResponse(message, messages, client)
 
-	var parsedResp Response
-	err := json.Unmarshal([]byte(respText), &parsedResp)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// var parsedResp Response
+	// err := json.Unmarshal([]byte(respText), &parsedResp)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	parsedResp := respText
 
-	fmt.Printf("%v\n", parsedResp)
-	if parsedResp.Code == "" {
+
+	// fmt.Printf("%v\n", parsedResp)
+	// if parsedResp.Code == "" {
 		botMessage := `
 		<div class="my-2 bg-gray-700 p-3 rounded-lg self-start max-w-[80%]">
-		` + template.HTMLEscapeString(parsedResp.Message) + `
+		` + template.HTMLEscapeString(parsedResp) + `
 		</div>
 		`
 		w.Header().Set("Context-Type", "text/html")
 		w.Write([]byte(botMessage))
 		return updatedMessages
-	}
-
-	botMessage := `
-	<div class="my-2 gray-600 p-2 rounded-lg self-start flex flex-col max-w-[80%]">
-	<div class="bg-gray-700 p-3 rounded-lg" 
-	` + template.HTMLEscapeString(parsedResp.Message) + `
-	</div>
+	// }
 	
-	<div class="bg-red-500 p-3 rounded-lg">
-	` + template.HTMLEscapeString(parsedResp.Code) + `
-	</div>
-	</div>
-	`
-
-	w.Header().Set("Content-Type", "text/html")
-	w.Write([]byte(botMessage))
-	return updatedMessages
+	// <div class="my-2 gray-600 p-2 rounded-lg self-start flex flex-col max-w-[80%]">
+	// <div class="bg-gray-700 p-3 rounded-lg" 
+	// ` + template.HTMLEscapeString(parsedResp.Message) + `
+	// </div>
+	//
+	// <div class="bg-red-500 p-3 rounded-lg">
+	// ` + template.HTMLEscapeString(parsedResp.Code) + `
+	// </div>
+	// </div>
+	// `
+	//
+	// w.Header().Set("Content-Type", "text/html")
+	// w.Write([]byte(botMessage))
+	// return updatedMessages
 }
 
 func getOpenAIResponse(
