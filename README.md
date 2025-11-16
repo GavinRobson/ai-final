@@ -25,6 +25,6 @@ cd GavinRobsonAiFinal
   ```bash
   ./run.sh
   ```
-
+* **NOTE: If you get error `OPENAI_API_KEY must be set`, make sure to `cd` into the newly created `GavinRobsonAiFinal` directory.**
 * Now, the server should be running in the terminal
 * Open a browser and navigate to http://localhost:3000 in order to see the page
