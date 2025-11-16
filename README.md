@@ -22,9 +22,9 @@ cd GavinRobsonAiFinal
   ```
 ### MacOS / Linux
 * To run the program on MacOS or Linux:
-```bash
-./run.sh
-```
+  ```bash
+  ./run.sh
+  ```
 
 * Now, the server should be running in the terminal
 * Open a browser and navigate to http://localhost:3000 in order to see the page
