@@ -1,7 +1,7 @@
 {
   "name": "ai-final-py-tutor",
   "version": "1.0.0",
-  "description": "",
+  "description": "This AI Python Tutor is a great way for new programmers to get started on their Python journey! For experienced programmers, this tutor can be a tool to freshen up your Python skills. This Python Tutor can: 1. Answer concept questions about the Python language. 2. Provide simple, helpful code examples. 3. Debug the user's own code. 4. Create exercises for the user to complete. 5. Gives constructive, motivating feedback.",
   "license": "ISC",
   "author": "",
   "type": "commonjs",
@@ -9,11 +9,17 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "devDependencies": {
-    "@tailwindcss/typography": "^0.5.19",
-    "tailwindcss": "^4.1.17"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GavinRobson/ai-final.git"
   },
-  "dependencies": {
-    "@tailwindcss/cli": "^4.1.17"
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/GavinRobson/ai-final/issues"
+  },
+  "homepage": "https://github.com/GavinRobson/ai-final#readme",
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.17",
+    "tailwindcss": "^4.1.17"
   }
 }

@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
-	// "encoding/json"
+	"encoding/json"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
-	// "fmt"
-
+	"fmt"
+	"strings"
 	"github.com/joho/godotenv"
 	openai "github.com/sashabaranov/go-openai"
 )
@@ -39,7 +39,15 @@ func main() {
 			create exercises for the user to complete, and give constructive, motivating feedback 
 			on the user's code.	This will be a purely textual response so please format 
 			accordingly. Please use very short responses that get straight to the point, not 
-			a lot of verboseness.`,
+			a lot of verboseness. Please format your responses in a valid JSON data structure that follows this pattern:
+			{
+				"message": <The text response you will tell the user>,
+				"code": <If there is code to be shown to the user, place it here. Else, keep it an empty string "">
+			},
+			Do not use markdown format. Your full response should be a string that starts with { to show the start of the json,
+			and ends with } to show the end of the json. If the code has new lines, please place the escapes for the newline 
+			in their proper locations. Also please do the same thing with tabs with the escape for tabs.
+			`,
 		},
 	}
 
@@ -59,41 +67,43 @@ func handleMessage(w http.ResponseWriter, r *http.Request, client *openai.Client
 	message := r.FormValue("message")
 
 	respText, updatedMessages := getOpenAIResponse(message, messages, client)
+	fmt.Println(respText)
 
-	// var parsedResp Response
-	// err := json.Unmarshal([]byte(respText), &parsedResp)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	parsedResp := respText
+	var parsedResp Response
+	if err := json.Unmarshal([]byte(respText), &parsedResp); err != nil {
+		log.Fatal(err)
+	}
 
-
-	// fmt.Printf("%v\n", parsedResp)
-	// if parsedResp.Code == "" {
+	textMessage := parsedResp.Message
+	codeMessage := parsedResp.Code
+	codeMessage = strings.ReplaceAll(codeMessage, "\\n", "\n")
+	codeMessage = strings.ReplaceAll(codeMessage, "\\t", "\t")
+	fmt.Println(codeMessage)
+	if codeMessage == "" {
 		botMessage := `
 		<div class="my-2 bg-gray-700 p-3 rounded-lg self-start max-w-[80%]">
-		` + template.HTMLEscapeString(parsedResp) + `
+		` + template.HTMLEscapeString(textMessage) + `
 		</div>
 		`
-		w.Header().Set("Context-Type", "text/html")
+		w.Header().Set("Content-Type", "text/html")
 		w.Write([]byte(botMessage))
 		return updatedMessages
-	// }
-	
-	// <div class="my-2 gray-600 p-2 rounded-lg self-start flex flex-col max-w-[80%]">
-	// <div class="bg-gray-700 p-3 rounded-lg" 
-	// ` + template.HTMLEscapeString(parsedResp.Message) + `
-	// </div>
-	//
-	// <div class="bg-red-500 p-3 rounded-lg">
-	// ` + template.HTMLEscapeString(parsedResp.Code) + `
-	// </div>
-	// </div>
-	// `
-	//
-	// w.Header().Set("Content-Type", "text/html")
-	// w.Write([]byte(botMessage))
-	// return updatedMessages
+	}
+	botMessage := `
+	<div class="my-2 bg-gray-700 p-2 rounded-lg self-start flex flex-col max-w-[80%]">
+	<div class="p-3 rounded-md">
+	` + template.HTMLEscapeString(textMessage) + `
+	</div>
+
+	<div class="p-3 font-bold rounded-md">
+	<pre class="bg-gray-900 text-gray-100 p-3 rounded-lg whitespace-pre-wrap tab-size-2">` + template.HTMLEscapeString(codeMessage) + `</pre>
+	</div>
+	</div>
+	`
+
+	w.Header().Set("Content-Type", "text/html")
+	w.Write([]byte(botMessage))
+	return updatedMessages
 }
 
 func getOpenAIResponse(

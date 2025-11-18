@@ -123,13 +123,10 @@
         bubble.className =
           "my-2 bg-gray-700 p-3 rounded-lg self-start max-w-[80%] flex items-center space-x-2";
 
-        const label = document.createElement("span");
-
         const dots = document.createElement("div");
         dots.className = "typing-dots";
         dots.innerHTML = "<span></span><span></span><span></span>";
 
-        bubble.appendChild(label);
         bubble.appendChild(dots);
 
         chatArea.appendChild(bubble);
