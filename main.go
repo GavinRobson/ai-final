@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+
 	"github.com/joho/godotenv"
 	openai "github.com/sashabaranov/go-openai"
 )
@@ -124,7 +125,7 @@ func getOpenAIResponse(
 
 	messages = append(messages, openai.ChatCompletionMessage{
 		Role:    openai.ChatMessageRoleAssistant,
-		Content: input,
+		Content: resp.Choices[0].Message.Content,
 	})
 
 	return resp.Choices[0].Message.Content, messages
