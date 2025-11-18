@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"fmt"
 	"strings"
 	"github.com/joho/godotenv"
 	openai "github.com/sashabaranov/go-openai"
@@ -67,7 +66,6 @@ func handleMessage(w http.ResponseWriter, r *http.Request, client *openai.Client
 	message := r.FormValue("message")
 
 	respText, updatedMessages := getOpenAIResponse(message, messages, client)
-	fmt.Println(respText)
 
 	var parsedResp Response
 	if err := json.Unmarshal([]byte(respText), &parsedResp); err != nil {
@@ -78,7 +76,7 @@ func handleMessage(w http.ResponseWriter, r *http.Request, client *openai.Client
 	codeMessage := parsedResp.Code
 	codeMessage = strings.ReplaceAll(codeMessage, "\\n", "\n")
 	codeMessage = strings.ReplaceAll(codeMessage, "\\t", "\t")
-	fmt.Println(codeMessage)
+
 	if codeMessage == "" {
 		botMessage := `
 		<div class="my-2 bg-gray-700 p-3 rounded-lg self-start max-w-[80%]">
