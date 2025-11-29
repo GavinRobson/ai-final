@@ -1,6 +1,8 @@
 package main
 
 import (
+	"ai-final/database"
+	"ai-final/handlers"
 	"context"
 	"encoding/json"
 	"html/template"
@@ -8,16 +10,21 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
+
 	"github.com/joho/godotenv"
 	openai "github.com/sashabaranov/go-openai"
 )
 
 type Response struct {
+	Title   string `json:"title"`
 	Message string `json:"message"`
 	Code    string `json:"code"`
 }
 
 func main() {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
 	if err := godotenv.Load(); err != nil {
 		log.Println("Warning: .env file not found or could not be loaded!")
 	}
@@ -25,6 +32,11 @@ func main() {
 	apiKey := os.Getenv("OPENAI_API_KEY")
 	if apiKey == "" {
 		log.Fatal("OPENAI_API_KEY must be set")
+	}
+
+	_, err := database.InitMongo(ctx)
+	if err != nil {
+		log.Fatal("DATABASE CONNECTION FAILURE")
 	}
 
 	client := openai.NewClient(apiKey)
@@ -40,6 +52,9 @@ func main() {
 			accordingly. Please use very short responses that get straight to the point, not 
 			a lot of verboseness. Please format your responses in a valid JSON data structure that follows this pattern:
 			{
+				"title": <If this is the first message you are responding with or you believe the
+				title of the converstaion should be updated, create a new or updated title based
+				on the context of the converstaion. Else, keep it an empty string "">
 				"message": <The text response you will tell the user>,
 				"code": <If there is code to be shown to the user, place it here. Else, keep it an empty string "">
 			},
@@ -50,8 +65,23 @@ func main() {
 		},
 	}
 
-	http.Handle("/", http.FileServer(http.Dir("static")))
+	fs := http.FileServer(http.Dir("static"))
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
+	http.HandleFunc("/auth/login", handlers.LoginHandler)
+	http.HandleFunc("/auth/signup", handlers.SignupHandler)
+
+	http.HandleFunc("/chat", handlers.ChatHandler)
+	http.HandleFunc("/chat/", handlers.ChatHandler)
+
+	http.HandleFunc("/conversations", handlers.ConversationsHandler)
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/chat", http.StatusFound)
+	})
+
+	// http.Handle("/", http.FileServer(http.Dir("static")))
+	//
 	http.HandleFunc("/api/message", func(w http.ResponseWriter, r *http.Request) {
 		updatedMessages := handleMessage(w, r, client, messages)
 		messages = updatedMessages
@@ -65,6 +95,8 @@ func handleMessage(w http.ResponseWriter, r *http.Request, client *openai.Client
 	r.ParseForm()
 	message := r.FormValue("message")
 
+	// path := strings.TrimPrefix(r.URL.Path, "/chat")
+
 	respText, updatedMessages := getOpenAIResponse(message, messages, client)
 
 	var parsedResp Response
@@ -76,6 +108,7 @@ func handleMessage(w http.ResponseWriter, r *http.Request, client *openai.Client
 	codeMessage := parsedResp.Code
 	codeMessage = strings.ReplaceAll(codeMessage, "\\n", "\n")
 	codeMessage = strings.ReplaceAll(codeMessage, "\\t", "\t")
+	title := parsedResp.Title
 
 	if codeMessage == "" {
 		botMessage := `
@@ -98,6 +131,7 @@ func handleMessage(w http.ResponseWriter, r *http.Request, client *openai.Client
 	</div>
 	</div>
 	`
+		database.AddNewConversation(title, updatedMessages, r, w)
 
 	w.Header().Set("Content-Type", "text/html")
 	w.Write([]byte(botMessage))
@@ -124,7 +158,7 @@ func getOpenAIResponse(
 
 	messages = append(messages, openai.ChatCompletionMessage{
 		Role:    openai.ChatMessageRoleAssistant,
-		Content: input,
+		Content: resp.Choices[0].Message.Content,
 	})
 
 	return resp.Choices[0].Message.Content, messages

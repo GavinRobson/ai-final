@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <link href="/static/css/output.css" rel="stylesheet" />
+    <title>Document</title>
+  </head>
+
+  <body class="h-screen w-screen flex items-center justify-center bg-gray-700">
+    <div class="w-1/4 bg-gray-800 rounded-lg flex flex-col">
+      <div class="w-full flex items-center justify-center p-6">
+        <h1 class="font-semibold text-gray-300 text-lg">Login</h1>
+      </div>
+      <form
+        class="flex flex-col w-full px-4 pb-6 rounded-lg shadow-lg text-gray-300 justify-center"
+        hx-post="/auth/login"
+        hx-trigger="submit"
+        hx-swap="innerHTML"
+        hx-target="#loginError"
+      >
+        <input
+          class="p-2 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:ring-0"
+          type="text"
+          name="username"
+          placeholder="username"
+          required
+        />
+        <input
+          class="p-2 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:ring-0"
+          type="password"
+          name="password"
+          placeholder="password"
+          required
+        />
+        <button
+          class="p-1 bg-blue-500 hover:bg-blue-400 transition-all cursor-pointer"
+          type="submit"
+        >
+          Login
+        </button>
+      </form>
+      <div id="loginError"class="px-4 pb-2"></div>
+      <div
+        class="flex flex-row w-full items-center justify-center text-gray-300 py-4 space-x-2"
+      >
+        <span> Don't have an account? </span>
+        <span
+          class="text-blue-500 hover:text-blue-400 transition-all underline cursor-pointer"
+          onclick="window.location.href='/auth/signup'"
+        >
+          Sign up
+        </span>
+      </div>
+    </div>
+  </body>
+</html>
