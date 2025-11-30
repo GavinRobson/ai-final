@@ -33,11 +33,10 @@ func ConversationsHandler(w http.ResponseWriter, r *http.Request) {
 				sb.WriteString(`
   			<div
           class="text-sm w-full p-2 hover:bg-gray-800 rounded-lg cursor-pointer transition-all"
-          hx-get="/chat/` + convo.ID + `"
+          hx-post="/api/chat/` + convo.ID + `"
 					hx-trigger="click"
           hx-target="#chatArea"
           hx-swap="innerHTML"
-          hx-push-url="true"
         >
 				`)
 				sb.WriteString(html.EscapeString(convo.Title))

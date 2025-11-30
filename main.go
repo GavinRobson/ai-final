@@ -72,16 +72,14 @@ func main() {
 	http.HandleFunc("/auth/signup", handlers.SignupHandler)
 
 	http.HandleFunc("/chat", handlers.ChatHandler)
-	http.HandleFunc("/chat/", handlers.ChatHandler)
 
 	http.HandleFunc("/conversations", handlers.ConversationsHandler)
+	http.HandleFunc("/api/chat/", handlers.PreviousChatHandler)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/chat", http.StatusFound)
 	})
 
-	// http.Handle("/", http.FileServer(http.Dir("static")))
-	//
 	http.HandleFunc("/api/message", func(w http.ResponseWriter, r *http.Request) {
 		updatedMessages := handleMessage(w, r, client, messages)
 		messages = updatedMessages
@@ -94,8 +92,6 @@ func main() {
 func handleMessage(w http.ResponseWriter, r *http.Request, client *openai.Client, messages []openai.ChatCompletionMessage) []openai.ChatCompletionMessage {
 	r.ParseForm()
 	message := r.FormValue("message")
-
-	// path := strings.TrimPrefix(r.URL.Path, "/chat")
 
 	respText, updatedMessages := getOpenAIResponse(message, messages, client)
 
