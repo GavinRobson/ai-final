@@ -50,6 +50,13 @@
     <div class="w-full bg-gray-900 text-center p-6 fixed top-0 left-0 z-10">
       <div class="text-3xl font-bold">Personal Python Tutor</div>
       <div class="text-xl text-gray-400">Ask me questions about Python!</div>
+      <button
+        class="absolute top-9 right-6 bg-red-500 hover:bg-red-400 transition-all rounded-lg cursor-pointer p-2"
+        hx-get="/logout"
+        hx-trigger="click"
+      >
+        <span class="text-gray-300"> Logout </span>
+      </button>
     </div>
 
     <div class="pt-28 flex w-full min-h-screen">
@@ -60,6 +67,10 @@
           <span class="text-sm font-semibold text-gray-400">Conversations</span>
           <button
             class="cursor-pointer text-gray-400 hover:text-gray-200 transition-colors"
+            hx-get="/api/chat/0"
+            hx-trigger="click"
+            hx-target="#chatArea"
+            hx-swap="innerHTML"
           >
             <svg
               width="20px"
@@ -78,27 +89,21 @@
             </svg>
           </button>
         </div>
-        <div 
-          class="flex flex-col" 
+        <div
+          class="flex flex-col"
           id="conversationArea"
           hx-get="/conversations"
           hx-trigger="load"
           hx-swap="innerHTML"
         >
-
           <!-- Previous Conversations Go Here -->
-
-
         </div>
-
       </nav>
       <main class="flex-1 flex justify-center">
         <div
           id="chatArea"
           class="flex flex-col w-full md:w-1/2 pb-32 px-4 overflow-y-auto"
-        >
-          {{ .Content }}
-        </div>
+        ></div>
         <form
           id="chatForm"
           hx-post="/api/message"
@@ -118,6 +123,7 @@
             ></textarea>
             <button
               class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
+              id="textButton"
             >
               Send
             </button>
@@ -128,6 +134,17 @@
     <script>
       const textarea = document.getElementById("chatInput");
       const chatArea = document.getElementById("chatArea");
+
+      textarea.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && e.shiftKey) {
+          return;
+        }
+
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          document.getElementById("textButton").click();
+        }
+      })
 
       textarea.addEventListener("input", () => {
         textarea.style.height = "auto";

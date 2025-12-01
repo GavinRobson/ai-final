@@ -2,16 +2,12 @@ package handlers
 
 import (
 	"ai-final/database"
-	"context"
 	"encoding/json"
 	"html/template"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/sashabaranov/go-openai"
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 var chatShellTmpl = template.Must(template.ParseFiles("templates/chat/chat.html"))
@@ -22,28 +18,19 @@ func ChatHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/auth/login", http.StatusFound)
 		return
 	}
+	userID := userIDCookie.Value
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := chatShellTmpl.Execute(w, nil); err != nil {
 		http.Error(w, "template error", 500)
 	}
+	SetMessages("0", userID, nil)
 }
 
 type Response struct {
 	Title   string `json:"title"`
 	Message string `json:"message"`
 	Code    string `json:"code"`
-}
-
-type StoredMessage struct {
-	Role string `bson:"role" json:"role"`
-	Content string `bson:"content" json:"content"`
-}
-
-type ConversationDoc struct {
-	ID bson.ObjectID `bson:"_id"`
-	UserID string `bson:"userId"`
-	Messages []StoredMessage `bson:"messages"`
 }
 
 func PreviousChatHandler(w http.ResponseWriter, r *http.Request) {
@@ -56,40 +43,21 @@ func PreviousChatHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	userID := userIDCookie.Value
 
-	userCtx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
-
-	client, err := database.InitMongo(userCtx)
-	if err != nil {
-		http.Error(w, "database error", 500)
-		return
-	}
-
 	chatID := strings.TrimPrefix(path, "/")
 
-	oid, err := bson.ObjectIDFromHex(chatID)
+	if chatID == "0" {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(""))
+		SetMessages("0", userID, nil)
+		return
+
+	}
+
+	messages, err := database.GetConversation(r.Context(), userID, chatID)	
 	if err != nil {
-		http.NotFound(w, r)
+		http.Error(w, "error getting conversation", 500)
 		return
 	}
-
-	var convo ConversationDoc
-	err = client.Collection("conversations").FindOne(r.Context(), bson.M{
-		"_id":    oid,
-		"userId": userID,
-	}).Decode(&convo)
-
-	if err == mongo.ErrNoDocuments {
-		http.NotFound(w, r)
-		return
-	}
-
-	if err != nil {
-		http.Error(w, "internal db error", 500)
-		return
-	}
-
-	messages := convo.Messages 
 
 	var sb strings.Builder
 
@@ -134,4 +102,5 @@ func PreviousChatHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/html")
 	w.Write([]byte(sb.String()))
+	SetMessages(chatID, userID, messages)
 }

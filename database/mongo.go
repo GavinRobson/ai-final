@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"time"
-	"net/http"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -77,15 +76,7 @@ func GetConversationsByID(ctx context.Context, userID string) ([]ConversationLis
 	return items, nil
 }
 
-func AddNewConversation(title string, messages []openai.ChatCompletionMessage, r *http.Request, w http.ResponseWriter) (string, error) {
-
-	userIDCookie, err := r.Cookie("user_id")
-	if err != nil || userIDCookie.Value == "" {
-		http.Redirect(w, r, "/auth/login", http.StatusFound)
-		return "", fmt.Errorf("no user id")
-	}
-	userID := userIDCookie.Value
-
+func AddNewConversation(title, userID string, messages []openai.ChatCompletionMessage) (string, error) {
 	coll := client.Collection("conversations")
 
 	result, err := coll.InsertOne(context.TODO(), bson.M{
@@ -102,8 +93,59 @@ func AddNewConversation(title string, messages []openai.ChatCompletionMessage, r
 		return "", fmt.Errorf("could not parse inserted user _id")
 	}
 
-	fmt.Println(idRaw.Hex())
 	return idRaw.Hex(), nil
 }
 
+func AddMessageToConversation(ctx context.Context, title, chatID, userID string, userMessage, botMessage openai.ChatCompletionMessage) error {
+	messages := []openai.ChatCompletionMessage{
+		userMessage,
+		botMessage,
+	}
+	oid, err := bson.ObjectIDFromHex(chatID)
+	if err != nil {
+		return fmt.Errorf("error parsing chatID")
+	}
+	_, err = client.Collection("conversations").UpdateOne(ctx, 
+		bson.M{"_id": oid, "userId": userID},
+		bson.M{"$push": bson.M{"messages": bson.M{"$each": messages}}},
+		)
+	if err != nil {
+		return fmt.Errorf("error adding message to conversation: %w", err)
+	}
+	return nil
+}
 
+type StoredMessage struct {
+	Role string `bson:"role" json:"role"`
+	Content string `bson:"content" json:"content"`
+}
+
+type ConversationDoc struct {
+	ID bson.ObjectID `bson:"_id"`
+	UserID string `bson:"userId"`
+	Messages []StoredMessage `bson:"messages"`
+}
+
+func GetConversation(ctx context.Context, userID, chatID string) ([]openai.ChatCompletionMessage, error) {
+	var convo ConversationDoc
+	oid, err := bson.ObjectIDFromHex(chatID)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing chatID")
+	}
+	err = client.Collection("conversations").FindOne(ctx, bson.M{
+		"_id": oid,
+		"userId": userID,
+	}).Decode(&convo)	
+	if err != nil {
+		return nil, fmt.Errorf("error getting conversation")
+	}
+
+	converted := make([]openai.ChatCompletionMessage, 0, len(convo.Messages))
+	for _, msg := range convo.Messages {
+		converted = append(converted, openai.ChatCompletionMessage{
+			Role: msg.Role,
+			Content: msg.Content,
+		})
+	}
+	return converted, nil
+}

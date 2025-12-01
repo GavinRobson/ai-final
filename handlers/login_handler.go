@@ -2,12 +2,14 @@
 package handlers
 
 import (
-	"errors"
 	"ai-final/auth"
 	"context"
+	"errors"
 	"html/template"
 	"net/http"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 var loginTmpl = template.Must(template.ParseFiles("templates/auth/login.html"))
@@ -28,7 +30,17 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		userID, err := auth.Login(userCtx, username, password)
 		if errors.Is(err, auth.ErrNoUsersFound) {
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			w.Write([]byte(`<div class="text-red-500 text-center">User not found!</div>`))
+			w.Write([]byte(`<div class="text-red-500 text-sm text-center">
+				No users found!
+				</div>`))
+			return
+		}
+
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.Write([]byte(`<div class="text-red-500 text-sm text-center">
+				Incorrect password!
+				</div>`))
 			return
 		}
 

@@ -9,6 +9,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var ErrNoUsersFound = errors.New("no users found")
@@ -29,7 +30,6 @@ func Login(ctx context.Context, username, password string) (string, error) {
 	
 	err = coll.FindOne(context.TODO(), bson.M{
 		"username": username,
-		"hashedPassword": password,
 	}).Decode(&userDoc)
 
 	if err == mongo.ErrNoDocuments {
@@ -38,6 +38,11 @@ func Login(ctx context.Context, username, password string) (string, error) {
 
 	if err != nil {
 		return "", fmt.Errorf("internal error")
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(userDoc.HashedPassword), []byte(password))
+	if err != nil {
+		return "", bcrypt.ErrMismatchedHashAndPassword
 	}
 
 	return userDoc.ID.Hex(), nil
