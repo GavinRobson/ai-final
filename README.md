@@ -25,6 +25,6 @@ cd GavinRobsonAiFinal
   ```bash
   ./scripts/run.sh
   ```
-* **NOTE: If you get error `OPENAI_API_KEY must be set`, make sure to `cd` into the newly created `GavinRobsonAiFinal` directory and make sure the `OPENAI_API_KEY` variable is set to a valid key in the `.env` file.**
+* **NOTE: If you get error `OPENAI_API_KEY not set` or `MONGODB_URI not set`, make sure to `cd` into the newly created `GavinRobsonAiFinal` directory and make sure the `OPENAI_API_KEY` and `MONGODB_URI` variable is set to a valid key in the `.env` file.**
 * Now, the server should be running in the terminal.
 * Open a browser and navigate to http://localhost:3000 in order to see the page.
