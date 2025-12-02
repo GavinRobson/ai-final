@@ -19,7 +19,7 @@ const initialPrompt string =`
 			accordingly. Please use very short responses that get straight to the point, not 
 			a lot of verboseness. Please format your responses in a valid JSON data structure that follows this pattern:
 			{
-				"title": <If this is the first message you are responding with or you believe the
+				"title": <If this is the first message you are responding with, or you believe the
 				title of the converstaion should be updated, create a new or updated title based
 				on the context of the converstaion. Else, keep it an empty string "">
 				"message": <The text response you will tell the user>,

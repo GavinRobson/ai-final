@@ -39,6 +39,7 @@ func main() {
 	http.HandleFunc("/chat", handlers.ChatHandler)
 
 	http.HandleFunc("/conversations", handlers.ConversationsHandler)
+	http.HandleFunc("/conversations/", handlers.ConversationsHandler)
 	http.HandleFunc("/api/chat/", handlers.PreviousChatHandler)
 
 	http.HandleFunc("/logout", handlers.Logout)

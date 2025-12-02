@@ -53,7 +53,9 @@ func GetConversationsByID(ctx context.Context, userID string) ([]ConversationLis
 
 	coll := client.Collection("conversations")
 
-	cursor, err := coll.Find(ctx, bson.M{"userId": userID})
+	sort := options.Find().SetSort(bson.D{{"updatedAt", -1}})
+	
+	cursor, err := coll.Find(ctx, bson.M{"userId": userID}, sort)
 	if err != nil {
 		return nil, fmt.Errorf("find error: %w", err)
 	}
@@ -83,6 +85,8 @@ func AddNewConversation(title, userID string, messages []openai.ChatCompletionMe
 		"userId": userID,
 		"title": title,
 		"messages": messages,
+		"createdAt": time.Now(),
+		"updatedAt": time.Now(),
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed to create conversation: %w", err)
@@ -105,9 +109,24 @@ func AddMessageToConversation(ctx context.Context, title, chatID, userID string,
 	if err != nil {
 		return fmt.Errorf("error parsing chatID")
 	}
+	setDoc := bson.M{
+		"updatedAt": time.Now(),
+	}
+	if title != "" {
+		setDoc["title"] = title
+	}
+
+	update := bson.M{
+		"$set": setDoc,
+		"$push": bson.M{
+			"messages": bson.M{
+				"$each": messages,
+			},
+		},
+	}
 	_, err = client.Collection("conversations").UpdateOne(ctx, 
 		bson.M{"_id": oid, "userId": userID},
-		bson.M{"$push": bson.M{"messages": bson.M{"$each": messages}}},
+		update,
 		)
 	if err != nil {
 		return fmt.Errorf("error adding message to conversation: %w", err)
@@ -148,4 +167,22 @@ func GetConversation(ctx context.Context, userID, chatID string) ([]openai.ChatC
 		})
 	}
 	return converted, nil
+}
+
+func DeleteConversation(ctx context.Context, userID, chatID string) error {
+	oid, err := bson.ObjectIDFromHex(chatID)
+	if err != nil {
+		return fmt.Errorf("error parsing chatID")
+	}
+
+	_, err = client.Collection("conversations").DeleteOne(ctx, bson.M{
+		"_id": oid,
+		"userId": userID,
+	})
+
+	if err != nil {
+		return fmt.Errorf("error deleting conversation")
+	}
+
+	return nil;
 }

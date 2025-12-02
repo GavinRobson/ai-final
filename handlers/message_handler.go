@@ -47,33 +47,31 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	codeMessage = strings.ReplaceAll(codeMessage, "\\t", "\t")
 	title := parsedResp.Title
 
-	defer func() {
-		if persistentMessages[userID].Messages == nil {
-			current := persistentMessages[userID]
-			current.Messages = updatedMessages
-			persistentMessages[userID] = current
-			chatID, err := database.AddNewConversation(title, userID, persistentMessages[userID].Messages)
-			if err != nil {
-				http.Error(w, "error adding new conversation", 500)
-				return
-			}
-			current.ChatID = chatID
-			persistentMessages[userID] = current
-		} else {
-			current := persistentMessages[userID]
-			current.Messages = updatedMessages
-			persistentMessages[userID] = current
-			userMessage := openai.ChatCompletionMessage{
-				Role:    openai.ChatMessageRoleUser,
-				Content: input,
-			}
-			botMessage := openai.ChatCompletionMessage{
-				Role:    openai.ChatMessageRoleAssistant,
-				Content: respText,
-			}
-			database.AddMessageToConversation(r.Context(), title, persistentMessages[userID].ChatID, userID, userMessage, botMessage)
+	if persistentMessages[userID].Messages == nil {
+		current := persistentMessages[userID]
+		current.Messages = updatedMessages
+		persistentMessages[userID] = current
+		chatID, err := database.AddNewConversation(title, userID, persistentMessages[userID].Messages)
+		if err != nil {
+			http.Error(w, "error adding new conversation", 500)
+			return
 		}
-	}()
+		current.ChatID = chatID
+		persistentMessages[userID] = current
+	} else {
+		current := persistentMessages[userID]
+		current.Messages = updatedMessages
+		persistentMessages[userID] = current
+		userMessage := openai.ChatCompletionMessage{
+			Role:    openai.ChatMessageRoleUser,
+			Content: input,
+		}
+		botMessage := openai.ChatCompletionMessage{
+			Role:    openai.ChatMessageRoleAssistant,
+			Content: respText,
+		}
+		database.AddMessageToConversation(r.Context(), title, persistentMessages[userID].ChatID, userID, userMessage, botMessage)
+	}
 
 	if codeMessage == "" {
 		botMessage := `
@@ -81,6 +79,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 		` + template.HTMLEscapeString(textMessage) + `
 		</div>
 		`
+		w.Header().Set("HX-Trigger", "refreshConversations")
 		w.Header().Set("Content-Type", "text/html")
 		w.Write([]byte(botMessage))
 		return
@@ -97,6 +96,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	</div>
 	`
 
+	w.Header().Set("HX-Trigger", "refreshConversations")
 	w.Header().Set("Content-Type", "text/html")
 	w.Write([]byte(botMessage))
 }

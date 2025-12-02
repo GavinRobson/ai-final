@@ -93,7 +93,7 @@
           class="flex flex-col"
           id="conversationArea"
           hx-get="/conversations"
-          hx-trigger="load"
+          hx-trigger="load, refreshConversations from:body"
           hx-swap="innerHTML"
         >
           <!-- Previous Conversations Go Here -->
